@@ -1,0 +1,126 @@
+.app {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100%;
+}
+
+/* toolbar */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-soft);
+}
+.toolbar-title {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-right: 8px;
+}
+.toolbar-btn,
+.toolbar-select {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  border-radius: 6px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+.toolbar-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.toolbar-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.toolbar-spacer {
+  flex: 1;
+}
+
+/* split */
+.split {
+  display: grid;
+  min-height: 0;
+}
+.split-pane {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.split-divider {
+  background: var(--border);
+  cursor: col-resize;
+}
+.split-divider:hover,
+.split-divider:focus-visible {
+  background: var(--accent);
+  outline: none;
+}
+
+/* status bar */
+.statusbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 10px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-soft);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--fg-dim);
+}
+.statusbar-path {
+  color: var(--accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.statusbar-msg--error {
+  color: var(--err);
+}
+.statusbar-right {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* breadcrumb */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  min-height: 28px;
+}
+.breadcrumb-seg {
+  border: none;
+  background: none;
+  padding: 1px 3px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--fg-dim);
+}
+.breadcrumb-seg:hover {
+  color: var(--accent);
+  background: var(--hl-ancestor);
+}
+.breadcrumb-seg:last-child {
+  color: var(--fg);
+  font-weight: 600;
+}
+.breadcrumb-empty {
+  color: var(--fg-dim);
+}
+
+.textpane {
+  height: 100%;
+  overflow: hidden;
+}
+.textpane .cm-editor {
+  height: 100%;
+}

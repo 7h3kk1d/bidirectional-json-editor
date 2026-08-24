@@ -1,0 +1,186 @@
+.tree {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+.tree--stale .tree-scroll {
+  filter: grayscale(0.9);
+  opacity: 0.55;
+  pointer-events: auto;
+}
+.tree-banner {
+  padding: 5px 10px;
+  font-size: 12px;
+}
+.tree-banner--error {
+  background: color-mix(in srgb, var(--err) 12%, var(--bg));
+  color: var(--err);
+  border-bottom: 1px solid color-mix(in srgb, var(--err) 30%, var(--bg));
+}
+.tree-banner--info {
+  color: var(--fg-dim);
+}
+.tree-link {
+  border: none;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+.tree-scroll {
+  overflow: auto;
+  flex: 1;
+  position: relative;
+  outline: none;
+}
+.tree-spacer {
+  position: relative;
+}
+
+.tree-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--row-height);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  white-space: nowrap;
+  cursor: default;
+  border-left: 2px solid transparent;
+}
+.tree-row:hover {
+  background: var(--line-hl);
+}
+.row--stale {
+  filter: grayscale(0.9);
+  opacity: 0.55;
+}
+.row--ancestor {
+  background: var(--hl-ancestor);
+}
+.row--selected {
+  background: var(--hl-selected);
+}
+.row--caret {
+  outline: 1.5px dashed var(--hl-caret);
+  outline-offset: -1.5px;
+}
+.row--focus {
+  border-left-color: var(--accent);
+}
+.tree-row:focus {
+  outline: none;
+}
+.tree-row:focus-visible {
+  outline: 1.5px solid var(--accent);
+  outline-offset: -1.5px;
+}
+
+.tree-chevron {
+  border: none;
+  background: none;
+  width: 16px;
+  padding: 0;
+  color: var(--fg-dim);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.tree-chevron--none {
+  display: inline-block;
+}
+
+.tree-key {
+  color: var(--syn-key);
+}
+.tree-colon {
+  color: var(--fg-dim);
+}
+.tree-index {
+  color: var(--fg-dim);
+  min-width: 2ch;
+  text-align: right;
+}
+.tree-value--string {
+  color: var(--syn-string);
+}
+.tree-value--number {
+  color: var(--syn-number);
+}
+.tree-value--boolean,
+.tree-value--null {
+  color: var(--syn-atom);
+}
+.tree-value--object,
+.tree-value--array {
+  color: var(--fg-dim);
+}
+.tree-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-row__tools {
+  margin-left: auto;
+  display: none;
+  align-items: center;
+  gap: 4px;
+  padding-right: 8px;
+}
+.tree-row:hover .tree-row__tools,
+.tree-row:focus-within .tree-row__tools {
+  display: inline-flex;
+}
+.tree-typeselect {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  border-radius: 4px;
+  font-size: 11px;
+  padding: 0 2px;
+}
+.tree-btn {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  border-radius: 4px;
+  width: 20px;
+  height: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+.tree-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.tree-btn--danger:hover {
+  border-color: var(--err);
+  color: var(--err);
+}
+
+.tree-input {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: var(--bg);
+  padding: 0 4px;
+  outline: none;
+}
+.tree-input--invalid {
+  border-color: var(--err);
+  animation: shake 0.25s;
+}
+.tree-keyedit__err {
+  color: var(--err);
+  font-size: 11px;
+  margin-left: 6px;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}

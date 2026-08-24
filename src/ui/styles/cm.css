@@ -1,0 +1,20 @@
+.cm-mirror-node {
+  background: var(--hl-selected);
+  border-radius: 2px;
+}
+.cm-mirror-ancestor {
+  background: var(--hl-ancestor);
+}
+.cm-ghost-caret {
+  display: inline-block;
+  width: 0;
+  border-left: 2px solid var(--hl-caret);
+  height: 1.15em;
+  vertical-align: text-bottom;
+  animation: ghost-blink 1s steps(1) infinite;
+}
+@keyframes ghost-blink {
+  50% {
+    opacity: 0;
+  }
+}

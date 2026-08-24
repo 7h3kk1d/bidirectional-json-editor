@@ -1,0 +1,21 @@
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 13px;
+}
+button,
+select,
+input {
+  font: inherit;
+  color: inherit;
+}
