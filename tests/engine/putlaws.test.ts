@@ -276,22 +276,26 @@ describe('formatting preservation (golden)', () => {
 })
 
 describe('dirty protocol', () => {
-  it('freezes the view, rejects view edits, recovers', () => {
+  it('freezes the view, keeps disjoint edits live, recovers', () => {
     const s = EditorSession.fromText('{"a": 1}')
     const v0 = s.view!
     // delete the closing brace
     s.applyTextEdit({ from: 7, to: 8, insert: '' })
     expect(s.state.kind).toBe('dirty')
     expect(s.view).toBe(v0)
-    expect(() => s.applyViewEdit(setScalar([0, 1], 2))).toThrow()
     expect(s.parseError()).not.toBeNull()
     // span queries remap through pending edits
     const span = s.spanOfLabel(v0.children[0].children[1].label)
     expect(span).toEqual({ from: 6, to: 7 })
-    // type it back
+    // "a"'s value only touches the broken region (the missing brace), so the
+    // localized dirty protocol lets the edit through
+    s.applyViewEdit(setScalar([0, 1], 2))
+    expect(s.text).toBe('{"a": 2')
+    // type the brace back
     s.applyTextEdit({ from: 7, to: 7, insert: '}' })
     expect(s.state.kind).toBe('clean')
-    expect(viewEquals(s.view!, v0)).toBe(true)
+    expect(s.text).toBe('{"a": 2}')
+    expect(s.view!.children[0].children[1].data).toMatchObject({ kind: 'VNumber', value: 2 })
     s.checkInvariants()
   })
 

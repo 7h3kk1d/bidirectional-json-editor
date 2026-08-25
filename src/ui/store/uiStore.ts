@@ -5,7 +5,7 @@
  */
 
 import { useSyncExternalStore } from 'react'
-import type { JsonView, Label, ParseErrorView } from '../../engine'
+import type { JsonView, Label, ParseErrorView, Span } from '../../engine'
 
 export interface UiState {
   view: JsonView | null
@@ -13,8 +13,8 @@ export interface UiState {
   changedLabel: Label | null
   stale: boolean
   parseError: ParseErrorView | null
-  /** root..dirty ancestor labels of the broken subtree (empty = whole doc) */
-  dirtyAncestors: readonly Label[]
+  /** the broken text region in current coordinates (null = clean) */
+  dirtySpan: Span | null
   /** text caret: root..deepest view labels under the caret */
   caretPath: readonly Label[]
   /** text selection: root..deepest view node covering the selection */
@@ -36,7 +36,7 @@ export class UiStore {
     changedLabel: null,
     stale: false,
     parseError: null,
-    dirtyAncestors: [],
+    dirtySpan: null,
     caretPath: [],
     selectionPath: [],
     structFocus: null,
@@ -66,19 +66,19 @@ export class UiStore {
       viewVersion: this.state.viewVersion + 1,
       stale: false,
       parseError: null,
-      dirtyAncestors: [],
+      dirtySpan: null,
       nodeCount,
     })
   }
 
-  /** Update the view without touching the stale/dirty flags (structured
-   * edits applied while the text is broken elsewhere). */
-  updateView(view: JsonView | null, nodeCount: number): void {
-    this.set({ view, viewVersion: this.state.viewVersion + 1, nodeCount })
+  /** Update the view while the text stays broken elsewhere (structured
+   * edits applied during the dirty state); the dirty span may have moved. */
+  updateView(view: JsonView | null, nodeCount: number, dirtySpan: Span | null): void {
+    this.set({ view, viewVersion: this.state.viewVersion + 1, nodeCount, dirtySpan })
   }
 
-  setStale(parseError: ParseErrorView | null, dirtyAncestors: readonly Label[]): void {
-    this.set({ stale: true, parseError, dirtyAncestors })
+  setStale(parseError: ParseErrorView | null, dirtySpan: Span | null): void {
+    this.set({ stale: true, parseError, dirtySpan })
   }
 
   setEmpty(): void {

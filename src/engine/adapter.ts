@@ -233,11 +233,16 @@ export class SessionEngine implements Engine {
     return this.session.parseError()
   }
 
-  /** While the text is unparseable: the UI label of the subtree containing
-   * the broken region (null = not attributable below the root). */
-  dirtyLabel(): Label | null {
-    const raw = this.session.dirtyLabel()
-    return raw === null ? null : this.normalizeToUiLabel(raw)
+  /** While the text is unparseable: the broken region in current text
+   * coordinates (null = clean). */
+  dirtySpan(): Span | null {
+    return this.session.dirtySpan()
+  }
+
+  /** While dirty: whether structured edits on this node would be refused —
+   * the UI grays exactly these. */
+  isLocked(l: Label): boolean {
+    return this.session.isLocked(l)
   }
 
   nodeCount(): number {

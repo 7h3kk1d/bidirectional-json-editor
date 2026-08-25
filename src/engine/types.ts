@@ -64,6 +64,8 @@ export interface Engine {
   ancestorsOf(l: Label): Label[]
   parseError(): ParseErrorView | null
   nodeCount(): number
-  /** while dirty: UI label of the subtree containing the broken region */
-  dirtyLabel(): Label | null
+  /** while dirty: the broken text region (current coordinates) */
+  dirtySpan(): Span | null
+  /** while dirty: whether structured edits on this node would be refused */
+  isLocked(l: Label): boolean
 }

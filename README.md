@@ -54,10 +54,11 @@ locality) are property-tested with fast-check in `tests/engine/putlaws.test.ts`.
    into view (the caret does not move).
 4. Double-click a value, type, Enter → the text updates in place;
    ⌘Z in either pane reverts both.
-5. Delete a `,` in the text → only the subtree containing the broken text
-   grays out; the rest of the tree stays live and editable (edits whose
-   rewritten span would touch the broken region are refused). Retype the
-   comma → recovers, keeping structured edits made in the meantime.
+5. Delete a `,` or a string quote in the text → only the rows whose text
+   overlaps the broken region gray out (the broken node and its ancestor
+   containers — exactly the nodes whose structured edits are blocked); every
+   other row stays live and editable. Retype it → recovers, keeping
+   structured edits made in the meantime.
 6. Rename a key to a duplicate sibling → inline error, no edit dispatched.
 7. Use the type dropdown / + / − on rows: inserts clone sibling
    indentation; deletes clean up exactly one comma.

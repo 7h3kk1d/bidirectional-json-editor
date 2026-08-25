@@ -90,27 +90,69 @@ describe('localized editing while dirty', () => {
     s.checkInvariants()
   })
 
-  it('dirtyLabel points at the broken subtree', () => {
+  it('dirtySpan covers the broken region; overlap decides locking', () => {
     const s = EditorSession.fromText('{\n  "a": 1,\n  "b": [true, null],\n  "c": 3\n}')
-    expect(s.dirtyLabel()).toBeNull()
+    expect(s.dirtySpan()).toBeNull()
     const v = s.view!
     const bArr = v.children[1].children[1]
     // break inside the array: delete the comma between true and null
     const off = s.text.indexOf('true,') + 4
     s.applyTextEdit({ from: off, to: off + 1, insert: '' })
     expect(s.state.kind).toBe('dirty')
-    const dl = s.dirtyLabel()
-    // the broken region is attributable to the array (or a node within it)
-    const chain: number[] = []
-    let cur = v
-    let found = dl === bArr.label
-    const walk = (n: typeof v): boolean => {
-      if (n.label === dl) return true
-      return n.children.some(walk)
+    const ds = s.dirtySpan()!
+    // the broken region sits inside the array's span...
+    const arrSpan = s.spanOfLabel(bArr.label)!
+    expect(ds.from).toBeGreaterThanOrEqual(arrSpan.from)
+    expect(ds.to).toBeLessThanOrEqual(arrSpan.to)
+    // ...and does NOT overlap the sibling members' spans
+    for (const idx of [0, 2]) {
+      const sib = s.spanOfLabel(v.children[idx].children[1].label)!
+      expect(sib.to <= ds.from || sib.from >= ds.to).toBe(true)
     }
-    found = found || walk(bArr)
-    expect(found).toBe(true)
-    void chain
-    void cur
+  })
+
+  it('deleting a string quote locks only that member chain (user scenario)', () => {
+    const text = '{\n  "generated": "2026",\n  "source": "sample",\n  "flags": [true, false]\n}'
+    const s = EditorSession.fromText(text)
+    const v = s.view!
+    // delete the closing quote of "sample"
+    const off = text.indexOf('"sample"') + 7
+    s.applyTextEdit({ from: off, to: off + 1, insert: '' })
+    expect(s.state.kind).toBe('dirty')
+    const ds = s.dirtySpan()!
+    // siblings' spans do not overlap the broken region -> they stay editable
+    const genSpan = s.spanOfLabel(v.children[0].children[1].label)!
+    const flagsSpan = s.spanOfLabel(v.children[2].children[1].label)!
+    expect(genSpan.to <= ds.from || genSpan.from >= ds.to).toBe(true)
+    expect(flagsSpan.to <= ds.from || flagsSpan.from >= ds.to).toBe(true)
+    // and both really are editable while broken
+    s.applyViewEdit(setScalar([0, 1], '2027'))
+    s.applyViewEdit(setScalar([2, 1, 0], false))
+    expect(s.text).toContain('"generated": "2027"')
+    expect(s.text).toContain('[false, false]')
+    // the broken member itself is locked
+    expect(() => s.applyViewEdit(setScalar([1, 1], 'x'))).toThrow(ViewEditBlockedError)
+    // heal
+    const healAt = s.text.indexOf('"sample') + 7
+    s.applyTextEdit({ from: healAt, to: healAt, insert: '"' })
+    expect(s.state.kind).toBe('clean')
+    expect(s.text).toBe(
+      '{\n  "generated": "2027",\n  "source": "sample",\n  "flags": [false, false]\n}',
+    )
+    s.checkInvariants()
+  })
+
+  it('editing the member right before a deleted comma is allowed (boundary touch)', () => {
+    const s = EditorSession.fromText('{"a": 1, "b": 2}')
+    const off = s.text.indexOf(',')
+    s.applyTextEdit({ from: off, to: off + 1, insert: '' })
+    expect(s.state.kind).toBe('dirty')
+    // "a"'s value ends exactly where the deleted comma was: touching, not overlapping
+    s.applyViewEdit(setScalar([0, 1], 111))
+    expect(s.text).toBe('{"a": 111 "b": 2}')
+    s.applyTextEdit({ from: s.text.indexOf(' "b"'), to: s.text.indexOf(' "b"'), insert: ',' })
+    expect(s.state.kind).toBe('clean')
+    expect(s.text).toBe('{"a": 111, "b": 2}')
+    s.checkInvariants()
   })
 })

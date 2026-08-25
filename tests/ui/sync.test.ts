@@ -118,7 +118,7 @@ describe('SyncController', () => {
     const commaIdx = view.state.doc.toString().indexOf('true,') + 4
     view.dispatch({ changes: { from: commaIdx, to: commaIdx + 1, insert: '' } })
     expect(store.getSnapshot().stale).toBe(true)
-    expect(store.getSnapshot().dirtyAncestors.length).toBeGreaterThan(0)
+    expect(store.getSnapshot().dirtySpan).not.toBeNull()
     const v = store.getSnapshot().view!
     if (v.kind !== 'object') throw new Error('bad view')
     // "a" is outside the broken subtree: edit applies, text updates, still dirty

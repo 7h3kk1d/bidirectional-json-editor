@@ -47,7 +47,7 @@ export class SyncController {
       this.guarded(() => {
         const res = this.engine.applyTextEdit(changes)
         if (res.parseError) {
-          this.store.setStale(res.parseError, this.dirtyAncestors())
+          this.store.setStale(res.parseError, this.engine.dirtySpan())
         } else if (res.view === null) {
           this.store.setEmpty()
         } else {
@@ -96,17 +96,16 @@ export class SyncController {
           userEvent: 'input.structure',
         })
       }
-      if (this.engine.isDirty()) this.store.updateView(res.view, this.engine.nodeCount())
-      else this.store.setDocument(res.view, null, this.engine.nodeCount())
+      if (this.engine.isDirty()) {
+        this.store.updateView(res.view, this.engine.nodeCount(), this.engine.dirtySpan())
+      } else {
+        this.store.setDocument(res.view, null, this.engine.nodeCount())
+      }
       resultLabel = this.newLabelFor(edit)
     })
     return resultLabel
   }
 
-  private dirtyAncestors(): Label[] {
-    const dl = this.engine.dirtyLabel()
-    return dl === null ? [] : this.engine.ancestorsOf(dl)
-  }
 
   /** After an insert, find the label of the created row so the UI can focus
    * or start editing it. */
@@ -198,7 +197,7 @@ export class SyncController {
   refreshDocumentState(changedLabel: Label | null): void {
     const err = this.engine.parseError()
     if (err) {
-      this.store.setStale(err, this.dirtyAncestors())
+      this.store.setStale(err, this.engine.dirtySpan())
     } else if (this.engine.getView() === null) {
       this.store.setEmpty()
     } else {

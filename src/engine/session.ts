@@ -33,7 +33,7 @@ import type { FormatContext } from './json/format'
 import { jsonPutSt } from './json/putSt'
 import { applyEdit, mapPos, mapPosBack } from './incremental/changeset'
 import type { TextEdit } from './incremental/changeset'
-import { coveringPath, labelToSpan, offsetToPath, pathToSpan } from './incremental/spans'
+import { labelToSpan, offsetToPath, pathToSpan } from './incremental/spans'
 import type { Span } from './incremental/spans'
 import { applyTextEditToCst } from './incremental/reparse'
 import type { ViewPatch } from './incremental/reparse'
@@ -258,7 +258,9 @@ export class EditorSession {
       }
       const span = pathToSpan(cst, mcp(paths))
       const env = this.state.envelope
-      if (!(span.to < env.min || span.from > env.max)) throw new ViewEditBlockedError()
+      // blocked iff the rewritten span OVERLAPS the broken region;
+      // touching at a boundary is fine (the rebase below handles it)
+      if (span.to > env.min && span.from < env.max) throw new ViewEditBlockedError()
     }
 
     const result = putCh(
@@ -293,8 +295,8 @@ export class EditorSession {
 
     if (this.state.kind === 'dirty') {
       const env = this.state.envelope
-      const before = cleanEdit.to < env.min
-      if (DEV_ASSERT && !before && !(cleanEdit.from > env.max)) {
+      const before = cleanEdit.to <= env.min
+      if (DEV_ASSERT && !before && !(cleanEdit.from >= env.max)) {
         throw new Error('engine invariant: pre-check let an overlapping dirty edit through')
       }
       const delta = cleanEdit.insert.length - (cleanEdit.to - cleanEdit.from)
@@ -313,7 +315,7 @@ export class EditorSession {
       } else {
         // after every pending edit: map its position forward through them
         currentEdit = {
-          from: mapPos(this.state.pending, cleanEdit.from, -1),
+          from: mapPos(this.state.pending, cleanEdit.from, 1),
           to: mapPos(this.state.pending, cleanEdit.to, 1),
           insert: cleanEdit.insert,
         }
@@ -397,23 +399,31 @@ export class EditorSession {
     return p === null ? null : zoom(this.view, p)
   }
 
-  /** While dirty: the label of the deepest view node whose (last-good) span
-   * covers the whole broken region — the subtree the UI should gray out.
-   * Null when clean, or when the breakage isn't attributable below the root. */
-  dirtyLabel(): Label | null {
-    if (this.state.kind !== 'dirty' || this.cst === null) return null
+  /** While dirty: the broken region in CURRENT text coordinates. A view node
+   * is locked exactly when its span overlaps this (open intervals) — the same
+   * rule applyViewEdit blocks on, so the UI can gray precisely what is
+   * actually uneditable. */
+  dirtySpan(): Span | null {
+    if (this.state.kind !== 'dirty') return null
     const env = this.state.envelope
-    const p = coveringPath(this.cst, env.min, env.max)
-    let cur = this.cst
-    const chain: (typeof cur)[] = [cur]
-    for (const i of p) {
-      cur = cur.children[i]
-      chain.push(cur)
+    return {
+      from: mapPos(this.state.pending, env.min, -1),
+      to: mapPos(this.state.pending, env.max, 1),
     }
-    for (let k = chain.length - 1; k >= 0; k--) {
-      if (this.viewReg.has(chain[k].label)) return chain[k].label
-    }
-    return null
+  }
+
+  /** The exact blocking predicate, per node: while dirty, a node is locked
+   * iff its (last-good) span overlaps the broken envelope — the same test
+   * applyViewEdit rejects on, evaluated in the same clean coordinates (a
+   * current-coordinate test would collapse to nothing for pure deletions). */
+  isLocked(l: Label): boolean {
+    if (this.state.kind !== 'dirty') return false
+    if (this.cst === null) return true
+    const p = this.srcReg.locate(l)
+    if (p === null) return true
+    const span = pathToSpan(this.cst, p)
+    const env = this.state.envelope
+    return span.to > env.min && span.from < env.max
   }
 
   parseError(): { span: Span; message: string } | null {

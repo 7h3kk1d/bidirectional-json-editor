@@ -21,7 +21,7 @@ export function TreeView({ controller, store }: { controller: SyncController; st
   const selectionPath = useUiStore(store, (s) => s.selectionPath)
   const structFocus = useUiStore(store, (s) => s.structFocus)
   const editing = useUiStore(store, (s) => s.editing)
-  const dirtyAncestors = useUiStore(store, (s) => s.dirtyAncestors)
+  const dirtySpan = useUiStore(store, (s) => s.dirtySpan)
 
   const rows = useMemo(() => flatten(view, collapsed), [view, collapsed])
   const indexOfLabel = useMemo(() => {
@@ -30,26 +30,26 @@ export function TreeView({ controller, store }: { controller: SyncController; st
     return m
   }, [rows])
 
-  // ---- stale scoping: which rows belong to the broken subtree ---------------
-  // [start, end) row range that is stale; null = nothing, 'all' = whole tree
-  const staleRange = useMemo((): { start: number; end: number } | 'all' | null => {
+  // ---- stale scoping ---------------------------------------------------------
+  // A row is locked exactly when its text span overlaps the broken region —
+  // the same rule the engine blocks structured edits on, so gray = uneditable.
+  const staleSet = useMemo((): Set<Label> | 'all' | null => {
     if (!stale) return null
-    // deepest ancestor of the broken region that is currently visible
-    for (let k = dirtyAncestors.length - 1; k >= 0; k--) {
-      const idx = indexOfLabel.get(dirtyAncestors[k])
-      if (idx !== undefined) {
-        const depth = rows[idx].depth
-        let end = idx + 1
-        while (end < rows.length && rows[end].depth > depth) end++
-        return { start: idx, end }
-      }
+    const out = new Set<Label>()
+    for (const row of rows) {
+      if (controller.engine.isLocked(row.label)) out.add(row.label)
     }
-    return 'all'
-  }, [stale, dirtyAncestors, rows, indexOfLabel])
+    if (out.size === 0 || out.size === rows.length) return 'all'
+    return out
+  }, [stale, dirtySpan, rows, controller])
   const isRowStale = useCallback(
-    (idx: number): boolean =>
-      staleRange === 'all' || (staleRange !== null && idx >= staleRange.start && idx < staleRange.end),
-    [staleRange],
+    (idx: number): boolean => {
+      if (staleSet === null) return false
+      if (staleSet === 'all') return true
+      const row = rows[idx]
+      return row !== undefined && staleSet.has(row.label)
+    },
+    [staleSet, rows],
   )
 
   // ---- windowing ------------------------------------------------------------
@@ -260,7 +260,7 @@ export function TreeView({ controller, store }: { controller: SyncController; st
   }
   const slice = rows.slice(first, last)
 
-  const wholeTreeStale = staleRange === 'all'
+  const wholeTreeStale = staleSet === 'all'
   return (
     <div className={`tree ${wholeTreeStale ? 'tree--stale' : ''}`} aria-disabled={wholeTreeStale}>
       {stale && (
