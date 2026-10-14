@@ -3,8 +3,10 @@
 A dual-pane JSON editor: raw text (CodeMirror 6) on the left, a structured
 tree editor on the right, kept consistent **incrementally in both
 directions** using the techniques of Wang, Gibbons & Wu,
-*Incremental Updates for Efficient Bidirectional Transformations*
-(ICFP 2011 — `bidi.pdf` in this repo).
+[*Incremental Updates for Efficient Bidirectional Transformations*](https://doi.org/10.1145/2034773.2034825)
+(ICFP 2011).
+
+Try it at <https://bandukwala.me/bidirectional-json-editor/>.
 
 - **Source** = a concrete syntax tree of the JSON text that preserves every
   byte of formatting; **view** = the plain JSON tree; `get` is a
